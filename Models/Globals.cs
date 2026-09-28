@@ -1,4 +1,4 @@
-namespace Grid;
+namespace Grid.Models;
 
 public static class Globals
 {

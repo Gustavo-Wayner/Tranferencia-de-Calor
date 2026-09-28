@@ -1,7 +1,7 @@
 using Raylib_cs;
 using RayGUI_cs;
 
-namespace Grid;
+namespace Grid.Views;
 
 public class Input
 {

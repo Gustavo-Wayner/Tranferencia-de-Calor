@@ -1,11 +1,10 @@
 using Raylib_cs;
 using RayGUI_cs;
 
-namespace Grid;
+namespace Grid.Models;
 public class Grid<T>
     where T: Material
 {
-    // concreta de cada celula e quem cria a grade
     private Func<T> newMaterial;
 
     private float CellSize { get; set; } = Globals.CELL_SIZE;
@@ -19,9 +18,6 @@ public class Grid<T>
 
     private T[,] plane;
     public T[,] Plane { get => plane; set => plane = value; }
-
-    // chamado com (i, j) quando uma celula e clicada
-    public Action<int, int>? OnCellClick;
 
     public Grid(Func<T> newMaterial)
     {
@@ -54,19 +50,11 @@ public class Grid<T>
             }
         }
 
-        // o canto {0, 0} sempre comeca como fonte de calor
-        Plane[0, 0].Temperature = Globals.HOTSPOT_TEMP;
+        // o canto {0, 0} sempre comeca com calor pra carai
+        // Plane[0, 0].Temperature = Globals.HOTSPOT_TEMP;
     }
 
-    // troca o material da celula mantendo posicao e temperatura
-    public void Replace(int i, int j, T newCell)
-    {
-        newCell.XY = Plane[i, j].XY;
-        newCell.Temperature = Plane[i, j].Temperature;
-        Plane[i, j] = newCell;
-    }
-
-    // uma passada de troca de calor: cada par de vizinhos troca uma unica vez
+    // uma passada de troca de calor: pra vizinhos não trocarem calor entre si mais de uma vez
     public void Step()
     {
         for(int i = 0; i < Height; i++)
@@ -86,11 +74,6 @@ public class Grid<T>
             for(int j = 0; j < Width; j++)
             {
                 Plane[i, j].Draw();
-                if (Plane[i, j].IsClicked())
-                {
-                    OnCellClick?.Invoke(i, j);
-                    Console.WriteLine("Celula clicada");
-                }
             }
         }
     }

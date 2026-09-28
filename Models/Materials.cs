@@ -1,10 +1,38 @@
 using System.Numerics;
 using Raylib_cs;
 using RayGUI_cs;
-namespace Grid;
+namespace Grid.Models;
 
 public abstract class Material
 {
+    // catalogo de materiais, na ordem do seletor do popup
+    public static readonly int Count = 8;
+    public static readonly string[] Labels = [.. Enumerable.Range(0, Count).Select(i => FromIndex(i).Label())];
+
+    public static Material FromIndex(int index) => index switch
+    {
+        0 => new Copper(),
+        1 => new Iron(),
+        2 => new Aluminum(),
+        3 => new Granite(),
+        4 => new Glass(),
+        5 => new Brick(),
+        6 => new Wood(),
+        _ => new Rubber(),
+    };
+
+    public static int IndexOf(Material material)
+    {
+        for (int i = 0; i < Count; i++)
+        {
+            if (FromIndex(i).Label() == material.Label())
+            {
+                return i;
+            }
+        }
+        return 0;
+    }
+
     private Rectangle bounds;
     public Rectangle Bounds { get => bounds; set => bounds = value; }
 
@@ -23,18 +51,33 @@ public abstract class Material
     private float conductivity;
     public float Conductivity { get => conductivity; set => conductivity = value; }
 
-    // o que varia de material pra material entra pelo construtor base
-    protected Material(float conductivity, float specificHeat, float mass)
+    private string name;
+
+    // o que varia de material pra material entra pelo construtor
+    protected Material(float conductivity, float specificHeat, float mass, string name)
     {
         Bounds = new Rectangle(0, 0, Globals.CELL_SIZE, Globals.CELL_SIZE);
 
         this.conductivity = conductivity;
         this.specificHeat = specificHeat;
         this.mass = mass;
+        this.name = name;
     }
 
-    // nome do material pra exibicao, cada subclasse identifica a si mesma
-    public abstract string Label();
+    // vira outro material copiando o que nele varia; o popup usa isso pra trocar
+    public void Become(Material other)
+    {
+        conductivity = other.conductivity;
+        specificHeat = other.specificHeat;
+        mass = other.mass;
+        name = other.name;
+    }
+
+    // nome do material pra exibicao
+    public string Label()
+    {
+        return name;
+    }
 
     // calor sensivel: Q = m . c . Delta T (de 0 K ate a temperatura atual)
     public float Heat()
@@ -69,12 +112,12 @@ public abstract class Material
         Text = $"{Label()} {Temperature:F0}";
         Raylib.DrawRectangleRec(Bounds, TemperatureColor());
         Raylib.DrawText(Label(), (int)Bounds.X + 3, (int)Bounds.Y + 3, 10, Color.White);
-        Raylib.DrawText($"{Temperature:F0} °K", (int)Bounds.X + 3, (int)Bounds.Y + 19, 10, Color.White);
+        Raylib.DrawText($"{Temperature:F0}", (int)Bounds.X + 3, (int)Bounds.Y + 19, 10, Color.White);
     }
 
     private Color TemperatureColor()
     {
-        // azul (frio) -> vermelho (quente) na faixa 0..100 graus (Vibecodado)
+        // azul (frio) -> vermelho (quente) na faixa 0..100 graus
         float t = Math.Clamp(Temperature / 100f, 0f, 1f);
         byte r = (byte)(30 + (235 - 30) * t);
         byte g = (byte)(60 + (45 - 60) * t);
@@ -104,84 +147,44 @@ public abstract class Material
 }
 
 // k adimensional, c em kJ/(kg.K) escalado, m = 1
-// (cada subclasse so passa pro base o que varia de material pra material)
+// (cada subclasse so passa pro construtor o que varia dela pras outras)
 
 public class Copper : Material
 {
-    public Copper() : base(0.90f, 0.385f, 1f) { }
-
-    public override string Label()
-    {
-        return "cobre";
-    }
+    public Copper() : base(0.90f, 0.385f, 1f, "cobre") { }
 }
 
 public class Iron : Material
 {
-    public Iron() : base(0.50f, 0.450f, 1f) { }
-
-    public override string Label()
-    {
-        return "ferro";
-    }
+    public Iron() : base(0.50f, 0.450f, 1f, "ferro") { }
 }
 
 public class Aluminum : Material
 {
-    public Aluminum() : base(0.70f, 0.900f, 1f) { }
-
-    public override string Label()
-    {
-        return "alumínio";
-    }
+    public Aluminum() : base(0.70f, 0.900f, 1f, "alumínio") { }
 }
 
 public class Granite : Material
 {
-    public Granite() : base(0.20f, 0.790f, 1f) { }
-
-    public override string Label()
-    {
-        return "granito";
-    }
+    public Granite() : base(0.20f, 0.790f, 1f, "granito") { }
 }
 
 public class Glass : Material
 {
-    public Glass() : base(0.15f, 0.840f, 1f) { }
-
-    public override string Label()
-    {
-        return "vidro";
-    }
+    public Glass() : base(0.15f, 0.840f, 1f, "vidro") { }
 }
 
 public class Brick : Material
 {
-    public Brick() : base(0.10f, 0.840f, 1f) { }
-
-    public override string Label()
-    {
-        return "tijolo";
-    }
+    public Brick() : base(0.10f, 0.840f, 1f, "tijolo") { }
 }
 
 public class Wood : Material
 {
-    public Wood() : base(0.05f, 1.700f, 1f) { }
-
-    public override string Label()
-    {
-        return "madeira";
-    }
+    public Wood() : base(0.05f, 1.700f, 1f, "madeira") { }
 }
 
 public class Rubber : Material
 {
-    public Rubber() : base(0.01f, 2.000f, 1f) { }
-
-    public override string Label()
-    {
-        return "borracha";
-    }
+    public Rubber() : base(0.01f, 2.000f, 1f, "borracha") { }
 }
